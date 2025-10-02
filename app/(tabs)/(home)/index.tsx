@@ -1,161 +1,387 @@
-import React from "react";
-import { Stack, Link } from "expo-router";
-import { FlatList, Pressable, StyleSheet, View, Text, Alert, Platform } from "react-native";
-import { IconSymbol } from "@/components/IconSymbol";
-import { GlassView } from "expo-glass-effect";
-import { useTheme } from "@react-navigation/native";
 
-const ICON_COLOR = "#007AFF";
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  useColorScheme,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { IconSymbol } from '@/components/IconSymbol';
+import Card from '../../../components/Card';
+import Button from '../../../components/Button';
+import { colors, spacing, typography, borderRadius } from '../../../styles/commonStyles';
+import { useAuthStore } from '../../../store/userStore';
+
+interface JobOffer {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  type: string;
+}
+
+interface Formation {
+  id: string;
+  title: string;
+  provider: string;
+  duration: string;
+  price: string;
+}
+
+// Mock data - replace with real data from Supabase
+const mockJobs: JobOffer[] = [
+  {
+    id: '1',
+    title: 'Développeur React Native',
+    company: 'TechCorp Bénin',
+    location: 'Cotonou',
+    salary: '300,000 - 500,000 FCFA',
+    type: 'CDI',
+  },
+  {
+    id: '2',
+    title: 'Designer UI/UX',
+    company: 'Creative Studio',
+    location: 'Porto-Novo',
+    salary: '250,000 - 400,000 FCFA',
+    type: 'CDD',
+  },
+  {
+    id: '3',
+    title: 'Chef de Projet Digital',
+    company: 'Digital Solutions',
+    location: 'Cotonou',
+    salary: '400,000 - 600,000 FCFA',
+    type: 'CDI',
+  },
+];
+
+const mockFormations: Formation[] = [
+  {
+    id: '1',
+    title: 'Formation React Native',
+    provider: 'Code Academy Bénin',
+    duration: '3 mois',
+    price: '150,000 FCFA',
+  },
+  {
+    id: '2',
+    title: 'Marketing Digital',
+    provider: 'Digital Institute',
+    duration: '2 mois',
+    price: '100,000 FCFA',
+  },
+];
 
 export default function HomeScreen() {
-  const theme = useTheme();
-  const modalDemos = [
-    {
-      title: "Standard Modal",
-      description: "Full screen modal presentation",
-      route: "/modal",
-      color: "#007AFF",
-    },
-    {
-      title: "Form Sheet",
-      description: "Bottom sheet with detents and grabber",
-      route: "/formsheet",
-      color: "#34C759",
-    },
-    {
-      title: "Transparent Modal",
-      description: "Overlay without obscuring background",
-      route: "/transparent-modal",
-      color: "#FF9500",
-    }
-  ];
+  const colorScheme = useColorScheme();
+  const themeColors = colors[colorScheme || 'light'];
+  const { profile } = useAuthStore();
 
-  const renderModalDemo = ({ item }: { item: (typeof modalDemos)[0] }) => (
-    <GlassView style={[
-      styles.demoCard,
-      Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-    ]} glassEffectStyle="regular">
-      <View style={[styles.demoIcon, { backgroundColor: item.color }]}>
-        <IconSymbol name="square.grid.3x3" color="white" size={24} />
+  const renderJobItem = ({ item }: { item: JobOffer }) => (
+    <Card style={styles.jobCard}>
+      <View style={styles.jobHeader}>
+        <Text style={[styles.jobTitle, { color: themeColors.text }]}>
+          {item.title}
+        </Text>
+        <View style={[styles.jobType, { backgroundColor: themeColors.highlight }]}>
+          <Text style={[styles.jobTypeText, { color: themeColors.primary }]}>
+            {item.type}
+          </Text>
+        </View>
       </View>
-      <View style={styles.demoContent}>
-        <Text style={[styles.demoTitle, { color: theme.colors.text }]}>{item.title}</Text>
-        <Text style={[styles.demoDescription, { color: theme.dark ? '#98989D' : '#666' }]}>{item.description}</Text>
+      
+      <Text style={[styles.jobCompany, { color: themeColors.textSecondary }]}>
+        {item.company}
+      </Text>
+      
+      <View style={styles.jobDetails}>
+        <View style={styles.jobDetailItem}>
+          <IconSymbol name="location-on" size={16} color={themeColors.textSecondary} />
+          <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
+            {item.location}
+          </Text>
+        </View>
+        <View style={styles.jobDetailItem}>
+          <IconSymbol name="attach-money" size={16} color={themeColors.textSecondary} />
+          <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
+            {item.salary}
+          </Text>
+        </View>
       </View>
-      <Link href={item.route as any} asChild>
-        <Pressable>
-          <GlassView style={[
-            styles.tryButton,
-            Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)' }
-          ]} glassEffectStyle="clear">
-            <Text style={[styles.tryButtonText, { color: theme.colors.primary }]}>Try It</Text>
-          </GlassView>
-        </Pressable>
-      </Link>
-    </GlassView>
-  );
-
-  const renderHeaderRight = () => (
-    <Pressable
-      onPress={() => Alert.alert("Not Implemented", "This feature is not implemented yet")}
-      style={styles.headerButtonContainer}
-    >
-      <IconSymbol name="plus" color={theme.colors.primary} />
-    </Pressable>
-  );
-
-  const renderHeaderLeft = () => (
-    <Pressable
-      onPress={() => Alert.alert("Not Implemented", "This feature is not implemented yet")}
-      style={styles.headerButtonContainer}
-    >
-      <IconSymbol
-        name="gear"
-        color={theme.colors.primary}
+      
+      <Button
+        title="Voir l'offre"
+        onPress={() => console.log('View job:', item.id)}
+        variant="outline"
+        size="small"
+        style={styles.viewButton}
       />
-    </Pressable>
+    </Card>
+  );
+
+  const renderFormationItem = ({ item }: { item: Formation }) => (
+    <Card style={styles.formationCard}>
+      <Text style={[styles.formationTitle, { color: themeColors.text }]}>
+        {item.title}
+      </Text>
+      <Text style={[styles.formationProvider, { color: themeColors.textSecondary }]}>
+        {item.provider}
+      </Text>
+      
+      <View style={styles.formationDetails}>
+        <View style={styles.formationDetailItem}>
+          <IconSymbol name="schedule" size={16} color={themeColors.textSecondary} />
+          <Text style={[styles.formationDetailText, { color: themeColors.textSecondary }]}>
+            {item.duration}
+          </Text>
+        </View>
+        <View style={styles.formationDetailItem}>
+          <IconSymbol name="attach-money" size={16} color={themeColors.textSecondary} />
+          <Text style={[styles.formationDetailText, { color: themeColors.textSecondary }]}>
+            {item.price}
+          </Text>
+        </View>
+      </View>
+      
+      <Button
+        title="En savoir plus"
+        onPress={() => console.log('View formation:', item.id)}
+        variant="outline"
+        size="small"
+        style={styles.viewButton}
+      />
+    </Card>
   );
 
   return (
-    <>
-      {Platform.OS === 'ios' && (
-        <Stack.Screen
-          options={{
-            title: "Building the app...",
-            headerRight: renderHeaderRight,
-            headerLeft: renderHeaderLeft,
-          }}
-        />
-      )}
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <FlatList
-          data={modalDemos}
-          renderItem={renderModalDemo}
-          keyExtractor={(item) => item.route}
-          contentContainerStyle={[
-            styles.listContainer,
-            Platform.OS !== 'ios' && styles.listContainerWithTabBar
-          ]}
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-    </>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.greeting, { color: themeColors.textSecondary }]}>
+              Bonjour,
+            </Text>
+            <Text style={[styles.userName, { color: themeColors.text }]}>
+              {profile?.first_name || 'Utilisateur'} 👋
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.notificationButton, { backgroundColor: themeColors.card }]}
+            onPress={() => console.log('Notifications')}
+          >
+            <IconSymbol name="notifications" size={24} color={themeColors.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={[styles.quickAction, { backgroundColor: themeColors.primary }]}
+            onPress={() => router.push('/(tabs)/jobs')}
+          >
+            <IconSymbol name="work" size={24} color="#FFFFFF" />
+            <Text style={styles.quickActionText}>Chercher un emploi</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.quickAction, { backgroundColor: themeColors.secondary }]}
+            onPress={() => router.push('/(tabs)/formations')}
+          >
+            <IconSymbol name="school" size={24} color="#FFFFFF" />
+            <Text style={styles.quickActionText}>Formations</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Latest Jobs */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              Dernières offres d&apos;emploi
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/jobs')}>
+              <Text style={[styles.seeAll, { color: themeColors.primary }]}>
+                Voir tout
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={mockJobs}
+            renderItem={renderJobItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+
+        {/* Latest Formations */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              Formations recommandées
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/formations')}>
+              <Text style={[styles.seeAll, { color: themeColors.primary }]}>
+                Voir tout
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={mockFormations}
+            renderItem={renderFormationItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor handled dynamically
   },
-  listContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  listContainerWithTabBar: {
-    paddingBottom: 100, // Extra padding for floating tab bar
-  },
-  demoCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
-  demoIcon: {
+  greeting: {
+    ...typography.body,
+  },
+  userName: {
+    ...typography.h2,
+    marginTop: spacing.xs,
+  },
+  notificationButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    justifyContent: 'center',
   },
-  demoContent: {
+  quickActions: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  quickAction: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
   },
-  demoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-    // color handled dynamically
-  },
-  demoDescription: {
-    fontSize: 14,
-    lineHeight: 18,
-    // color handled dynamically
-  },
-  headerButtonContainer: {
-    padding: 6,
-  },
-  tryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  tryButtonText: {
+  quickActionText: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    // color handled dynamically
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h3,
+  },
+  seeAll: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  horizontalList: {
+    paddingHorizontal: spacing.lg,
+  },
+  jobCard: {
+    width: 280,
+    marginRight: spacing.md,
+  },
+  jobHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  jobTitle: {
+    ...typography.h3,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  jobType: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  jobTypeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  jobCompany: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  jobDetails: {
+    marginBottom: spacing.md,
+  },
+  jobDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  jobDetailText: {
+    fontSize: 14,
+    marginLeft: spacing.xs,
+  },
+  formationCard: {
+    width: 260,
+    marginRight: spacing.md,
+  },
+  formationTitle: {
+    ...typography.h3,
+    marginBottom: spacing.sm,
+  },
+  formationProvider: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  formationDetails: {
+    marginBottom: spacing.md,
+  },
+  formationDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  formationDetailText: {
+    fontSize: 14,
+    marginLeft: spacing.xs,
+  },
+  viewButton: {
+    marginTop: spacing.sm,
   },
 });
