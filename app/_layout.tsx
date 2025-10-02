@@ -41,7 +41,7 @@ export default function RootLayout() {
     checkAuthState 
   } = useAuthStore();
 
-  useEffect(() => {
+  const handleInitialization = React.useCallback(async () => {
     if (loaded) {
       SplashScreen.hideAsync();
       checkAuthState();
@@ -49,7 +49,11 @@ export default function RootLayout() {
       ErrorLogger.initialize();
       setupGlobalErrorHandler();
     }
-  }, [loaded]);
+  }, [loaded, checkAuthState]);
+
+  useEffect(() => {
+    handleInitialization();
+  }, [handleInitialization]);
 
   useEffect(() => {
     if (!isConnected) {

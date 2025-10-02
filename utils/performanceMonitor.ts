@@ -1,5 +1,6 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
 
 const PERFORMANCE_LOG_KEY = 'performance_logs';
 const MAX_PERFORMANCE_LOGS = 50;

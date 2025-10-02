@@ -102,7 +102,7 @@ export default function JobsScreen() {
     filterJobs(query, selectedType);
   };
 
-  const filterJobs = (query: string, type: string) => {
+  const filterJobs = React.useCallback((query: string, type: string) => {
     const dataToFilter = jobs.length > 0 ? jobs : mockJobs;
     let filtered = dataToFilter;
 
@@ -121,12 +121,12 @@ export default function JobsScreen() {
     }
 
     setFilteredJobs(filtered);
-  };
+  }, [jobs]);
 
   // Update filtered jobs when jobs or filters change
   React.useEffect(() => {
     filterJobs(searchQuery, selectedType);
-  }, [jobs, searchQuery, selectedType]);
+  }, [jobs, searchQuery, selectedType, filterJobs]);
 
   const TypeFilter = () => (
     <View style={styles.typeFilter}>
