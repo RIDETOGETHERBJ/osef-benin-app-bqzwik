@@ -17,6 +17,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import Header from '../../../components/Header';
 import { colors, spacing, typography, borderRadius } from '../../../styles/commonStyles';
+import { useMessages } from '../../../hooks/useMessages';
+import { useAuthStore } from '../../../store/userStore';
 
 interface Message {
   id: string;
@@ -79,12 +81,13 @@ const mockMessages: Message[] = [
 
 export default function ChatScreen() {
   const { chatId } = useLocalSearchParams();
-  const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
+  const { user } = useAuthStore();
+  const { messages, sendMessage: sendMessageToDb, loading } = useMessages(chatId as string);
 
   // Mock chat info - replace with real data
   const chatInfo = {
@@ -125,83 +128,68 @@ export default function ChatScreen() {
     }
   };
 
-  const sendMessage = () => {
-    if (newMessage.trim() === '') return;
+  const sendMessage = async () => {
+    if (newMessage.trim() === '' || !chatId) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      senderName: 'Moi',
-      content: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-      type: 'text',
-      isMe: true,
-    };
-
-    setMessages(prev => [...prev, message]);
+    const messageContent = newMessage.trim();
     setNewMessage('');
 
-    // Simulate typing indicator and response
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      // Add a mock response
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        senderId: 'user1',
-        senderName: chatInfo.name,
-        content: 'Merci pour votre message ! Nous vous répondrons bientôt.',
-        timestamp: new Date().toISOString(),
-        type: 'text',
-        isMe: false,
-      };
-      setMessages(prev => [...prev, response]);
-    }, 2000);
+    const result = await sendMessageToDb(messageContent);
+    if (result?.error) {
+      console.log('Error sending message:', result.error);
+      // Restore message on error
+      setNewMessage(messageContent);
+    }
   };
 
-  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
+  const renderMessage = ({ item, index }: { item: any; index: number }) => {
+    const isMe = item.sender_id === user?.id;
     const previousMessage = index > 0 ? messages[index - 1] : null;
     const showDate = !previousMessage || 
-      formatDate(item.timestamp) !== formatDate(previousMessage.timestamp);
-    const showAvatar = !item.isMe && (!previousMessage || previousMessage.isMe || previousMessage.senderId !== item.senderId);
+      formatDate(item.created_at) !== formatDate(previousMessage.created_at);
+    const showAvatar = !isMe && (!previousMessage || previousMessage.sender_id === user?.id || previousMessage.sender_id !== item.sender_id);
 
     return (
       <View>
         {showDate && (
           <View style={styles.dateContainer}>
             <Text style={[styles.dateText, { color: themeColors.textSecondary }]}>
-              {formatDate(item.timestamp)}
+              {formatDate(item.created_at)}
             </Text>
           </View>
         )}
         
         <View style={[
           styles.messageContainer,
-          item.isMe ? styles.myMessageContainer : styles.otherMessageContainer,
+          isMe ? styles.myMessageContainer : styles.otherMessageContainer,
         ]}>
-          {!item.isMe && showAvatar && (
-            <Image source={{ uri: chatInfo.avatar }} style={styles.messageAvatar} />
+          {!isMe && showAvatar && (
+            <View style={[styles.messageAvatar, { backgroundColor: themeColors.primary }]}>
+              <Text style={styles.avatarText}>
+                {chatInfo.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
           )}
-          {!item.isMe && !showAvatar && <View style={styles.avatarSpacer} />}
+          {!isMe && !showAvatar && <View style={styles.avatarSpacer} />}
           
           <View style={[
             styles.messageBubble,
             {
-              backgroundColor: item.isMe ? themeColors.primary : themeColors.card,
+              backgroundColor: isMe ? themeColors.primary : themeColors.card,
               maxWidth: '75%',
             },
           ]}>
             <Text style={[
               styles.messageText,
-              { color: item.isMe ? '#FFFFFF' : themeColors.text },
+              { color: isMe ? '#FFFFFF' : themeColors.text },
             ]}>
               {item.content}
             </Text>
             <Text style={[
               styles.messageTime,
-              { color: item.isMe ? 'rgba(255,255,255,0.7)' : themeColors.textSecondary },
+              { color: isMe ? 'rgba(255,255,255,0.7)' : themeColors.textSecondary },
             ]}>
-              {formatTime(item.timestamp)}
+              {formatTime(item.created_at)}
             </Text>
           </View>
         </View>
@@ -240,7 +228,7 @@ export default function ChatScreen() {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={messages.length > 0 ? messages : mockMessages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
@@ -330,6 +318,13 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     marginRight: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   avatarSpacer: {
     width: 32 + spacing.sm,

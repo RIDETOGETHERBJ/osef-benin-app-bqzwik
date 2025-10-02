@@ -2,14 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Note: These are placeholder values. 
-// To enable Supabase functionality, please:
-// 1. Press the Supabase button in Natively
-// 2. Connect to your Supabase project
-// 3. Replace these values with your actual Supabase URL and anon key
-
-const supabaseUrl = 'https://your-project.supabase.co';
-const supabaseAnonKey = 'your-anon-key';
+const supabaseUrl = 'https://gbalpifistzxismztknz.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiYWxwaWZpc3R6eGlzbXp0a256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTIyMjcsImV4cCI6MjA3NDE4ODIyN30.mvl8p-y7yBNQP8uQDrXvrleQJmxS-0iFc_AnKlIRlkw';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -23,41 +17,41 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Database types
 export interface UserProfile {
   id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
+  user_id: string;
   role: 'candidat' | 'entreprise' | 'formateur' | 'admin';
-  location: string;
-  skills: string[];
-  is_profile_complete: boolean;
+  full_name: string;
+  avatar_url?: string;
+  phone?: string;
+  bio?: string;
+  skills?: string[];
+  location?: string;
+  verified: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface OffreEmploi {
   id: string;
+  entreprise_id: string;
   title: string;
   description: string;
-  company: string;
-  location: string;
-  salary_range: string;
-  requirements: string[];
-  created_by: string;
+  location?: string;
+  type: 'CDI' | 'CDD' | 'Stage' | 'Freelance';
+  salary_range?: string;
+  is_active: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Formation {
   id: string;
+  formateur_id: string;
   title: string;
-  description: string;
-  provider: string;
-  duration: string;
-  location: string;
-  price: number;
-  created_by: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  price?: number;
+  location?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Message {
@@ -65,17 +59,36 @@ export interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  chat_id: string;
+  is_read: boolean;
   created_at: string;
-  read: boolean;
 }
 
 export interface Candidature {
   id: string;
-  user_id: string;
   offre_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  cover_letter: string;
+  user_id: string;
+  motivation?: string;
+  cv_url?: string;
+  status: 'envoyée' | 'en cours' | 'acceptée' | 'refusée';
   created_at: string;
-  updated_at: string;
+}
+
+export interface Entreprise {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  logo_url?: string;
+  website?: string;
+  verified: boolean;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type?: string;
+  payload?: any;
+  is_read: boolean;
+  created_at: string;
 }

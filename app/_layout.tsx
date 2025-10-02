@@ -18,6 +18,9 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useAuthStore } from "../store/userStore";
+import NetworkStatus from "../components/NetworkStatus";
+import { OfflineManager } from "../utils/offlineManager";
+import { ErrorLogger, setupGlobalErrorHandler } from "../utils/errorLogger";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +37,7 @@ export default function RootLayout() {
     isAuthenticated, 
     hasSeenOnboarding, 
     isLoading, 
+    profile,
     checkAuthState 
   } = useAuthStore();
 
@@ -41,6 +45,9 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
       checkAuthState();
+      OfflineManager.initialize();
+      ErrorLogger.initialize();
+      setupGlobalErrorHandler();
     }
   }, [loaded]);
 
@@ -66,6 +73,11 @@ export default function RootLayout() {
     return <Redirect href="/auth/login" />;
   }
 
+  // Check if profile is complete
+  if (isAuthenticated && profile && (!profile.full_name || !profile.location || !profile.skills || profile.skills.length === 0)) {
+    return <Redirect href="/profile/edit" />;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <WidgetProvider>
@@ -78,10 +90,16 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="admin" />
             <Stack.Screen name="legal" />
+            <Stack.Screen name="email-confirmed" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen name="apply-job" />
+            <Stack.Screen name="my-applications" />
+            <Stack.Screen name="dev-tools" />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
             <Stack.Screen name="formsheet" options={{ presentation: "formSheet" }} />
             <Stack.Screen name="transparent-modal" options={{ presentation: "transparentModal" }} />
           </Stack>
+          <NetworkStatus />
           <StatusBar style="auto" />
         </ThemeProvider>
       </WidgetProvider>

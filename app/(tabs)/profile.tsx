@@ -21,7 +21,7 @@ import { useAuthStore } from '../../store/userStore';
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
-  const { profile, signOut, isLoading } = useAuthStore();
+  const { profile, user, signOut, isLoading } = useAuthStore();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -112,12 +112,12 @@ export default function ProfileScreen() {
         <Card style={styles.profileHeader}>
           <View style={[styles.avatar, { backgroundColor: themeColors.primary }]}>
             <Text style={styles.avatarText}>
-              {profile?.first_name?.charAt(0)?.toUpperCase() || 'U'}
+              {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
             </Text>
           </View>
           
           <Text style={[styles.profileName, { color: themeColors.text }]}>
-            {profile?.first_name} {profile?.last_name}
+            {profile?.full_name || 'Utilisateur'}
           </Text>
           
           <View style={[styles.roleBadge, { backgroundColor: themeColors.highlight }]}>
@@ -141,12 +141,17 @@ export default function ProfileScreen() {
           <ProfileItem
             icon="person"
             label="Nom complet"
-            value={`${profile?.first_name || ''} ${profile?.last_name || ''}`}
+            value={profile?.full_name || 'Non renseigné'}
           />
           <ProfileItem
             icon="mail"
             label="Email"
-            value={profile?.email}
+            value={user?.email || 'Non renseigné'}
+          />
+          <ProfileItem
+            icon="phone"
+            label="Téléphone"
+            value={profile?.phone || 'Non renseigné'}
           />
           <ProfileItem
             icon="work"
@@ -159,6 +164,15 @@ export default function ProfileScreen() {
             value={profile?.location || 'Non renseigné'}
           />
         </ProfileSection>
+
+        {/* Bio */}
+        {profile?.bio && (
+          <ProfileSection title="À propos">
+            <Text style={[styles.bioText, { color: themeColors.text }]}>
+              {profile.bio}
+            </Text>
+          </ProfileSection>
+        )}
 
         {/* Skills */}
         {profile?.skills && profile.skills.length > 0 && (
@@ -175,12 +189,31 @@ export default function ProfileScreen() {
           </ProfileSection>
         )}
 
+        {/* My Activity */}
+        <ProfileSection title="Mon activité">
+          <ProfileItem
+            icon="work"
+            label="Mes candidatures"
+            onPress={() => router.push('/my-applications')}
+          />
+          <ProfileItem
+            icon="bookmark"
+            label="Offres sauvegardées"
+            onPress={() => console.log('Saved jobs')}
+          />
+          <ProfileItem
+            icon="history"
+            label="Historique"
+            onPress={() => console.log('Activity history')}
+          />
+        </ProfileSection>
+
         {/* App Settings */}
         <ProfileSection title="Paramètres">
           <ProfileItem
             icon="notifications"
             label="Notifications"
-            onPress={() => console.log('Notifications settings')}
+            onPress={() => router.push('/notifications')}
           />
           <ProfileItem
             icon="security"
@@ -218,6 +251,17 @@ export default function ProfileScreen() {
               icon="bar-chart"
               label="Statistiques"
               onPress={() => router.push('/admin/stats')}
+            />
+          </ProfileSection>
+        )}
+
+        {/* Developer Tools (only in dev mode) */}
+        {__DEV__ && (
+          <ProfileSection title="Développement">
+            <ProfileItem
+              icon="code"
+              label="Outils de développement"
+              onPress={() => router.push('/dev-tools')}
             />
           </ProfileSection>
         )}
@@ -359,5 +403,9 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     borderWidth: 1,
+  },
+  bioText: {
+    ...typography.body,
+    lineHeight: 22,
   },
 });

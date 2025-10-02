@@ -16,6 +16,9 @@ import Card from '../../../components/Card';
 import Button from '../../../components/Button';
 import { colors, spacing, typography, borderRadius } from '../../../styles/commonStyles';
 import { useAuthStore } from '../../../store/userStore';
+import { useJobs } from '../../../hooks/useJobs';
+import { useFormations } from '../../../hooks/useFormations';
+import { useNotifications } from '../../../hooks/useNotifications';
 
 interface JobOffer {
   id: string;
@@ -83,8 +86,11 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
   const { profile } = useAuthStore();
+  const { jobs, loading: jobsLoading } = useJobs();
+  const { formations, loading: formationsLoading } = useFormations();
+  const { unreadCount } = useNotifications();
 
-  const renderJobItem = ({ item }: { item: JobOffer }) => (
+  const renderJobItem = ({ item }: { item: any }) => (
     <Card style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <Text style={[styles.jobTitle, { color: themeColors.text }]}>
@@ -98,20 +104,20 @@ export default function HomeScreen() {
       </View>
       
       <Text style={[styles.jobCompany, { color: themeColors.textSecondary }]}>
-        {item.company}
+        {item.entreprise?.name || 'Entreprise'}
       </Text>
       
       <View style={styles.jobDetails}>
         <View style={styles.jobDetailItem}>
           <IconSymbol name="location-on" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
-            {item.location}
+            {item.location || 'Non spécifié'}
           </Text>
         </View>
         <View style={styles.jobDetailItem}>
           <IconSymbol name="attach-money" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
-            {item.salary}
+            {item.salary_range || 'À négocier'}
           </Text>
         </View>
       </View>
@@ -126,26 +132,26 @@ export default function HomeScreen() {
     </Card>
   );
 
-  const renderFormationItem = ({ item }: { item: Formation }) => (
+  const renderFormationItem = ({ item }: { item: any }) => (
     <Card style={styles.formationCard}>
       <Text style={[styles.formationTitle, { color: themeColors.text }]}>
         {item.title}
       </Text>
       <Text style={[styles.formationProvider, { color: themeColors.textSecondary }]}>
-        {item.provider}
+        {item.formateur?.full_name || 'Formateur'}
       </Text>
       
       <View style={styles.formationDetails}>
         <View style={styles.formationDetailItem}>
           <IconSymbol name="schedule" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.formationDetailText, { color: themeColors.textSecondary }]}>
-            {item.duration}
+            {item.start_date ? new Date(item.start_date).toLocaleDateString('fr-FR') : 'Date à définir'}
           </Text>
         </View>
         <View style={styles.formationDetailItem}>
           <IconSymbol name="attach-money" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.formationDetailText, { color: themeColors.textSecondary }]}>
-            {item.price}
+            {item.price ? `${item.price} FCFA` : 'Gratuit'}
           </Text>
         </View>
       </View>
@@ -170,14 +176,21 @@ export default function HomeScreen() {
               Bonjour,
             </Text>
             <Text style={[styles.userName, { color: themeColors.text }]}>
-              {profile?.first_name || 'Utilisateur'} 👋
+              {profile?.full_name?.split(' ')[0] || 'Utilisateur'} 👋
             </Text>
           </View>
           <TouchableOpacity
             style={[styles.notificationButton, { backgroundColor: themeColors.card }]}
-            onPress={() => console.log('Notifications')}
+            onPress={() => router.push('/notifications')}
           >
             <IconSymbol name="notifications" size={24} color={themeColors.text} />
+            {unreadCount > 0 && (
+              <View style={[styles.notificationBadge, { backgroundColor: themeColors.error }]}>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount.toString()}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -214,7 +227,7 @@ export default function HomeScreen() {
           </View>
           
           <FlatList
-            data={mockJobs}
+            data={jobs.length > 0 ? jobs : mockJobs}
             renderItem={renderJobItem}
             keyExtractor={(item) => item.id}
             horizontal
@@ -237,7 +250,7 @@ export default function HomeScreen() {
           </View>
           
           <FlatList
-            data={mockFormations}
+            data={formations.length > 0 ? formations : mockFormations}
             renderItem={renderFormationItem}
             keyExtractor={(item) => item.id}
             horizontal
@@ -383,5 +396,21 @@ const styles = StyleSheet.create({
   },
   viewButton: {
     marginTop: spacing.sm,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

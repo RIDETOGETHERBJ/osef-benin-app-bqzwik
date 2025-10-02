@@ -15,6 +15,8 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Header from '../../components/Header';
 import { colors, spacing, typography, borderRadius } from '../../styles/commonStyles';
+import { useJobs } from '../../hooks/useJobs';
+import { router } from 'expo-router';
 
 interface JobOffer {
   id: string;
@@ -89,26 +91,79 @@ const mockJobs: JobOffer[] = [
 
 export default function JobsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredJobs, setFilteredJobs] = useState(mockJobs);
+  const [filteredJobs, setFilteredJobs] = useState<JobOffer[]>([]);
+  const [selectedType, setSelectedType] = useState<string>('all');
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
+  const { jobs, loading } = useJobs();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim() === '') {
-      setFilteredJobs(mockJobs);
-    } else {
-      const filtered = mockJobs.filter(
-        job =>
-          job.title.toLowerCase().includes(query.toLowerCase()) ||
-          job.company.toLowerCase().includes(query.toLowerCase()) ||
-          job.location.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredJobs(filtered);
-    }
+    filterJobs(query, selectedType);
   };
 
-  const renderJobItem = ({ item }: { item: JobOffer }) => (
+  const filterJobs = (query: string, type: string) => {
+    const dataToFilter = jobs.length > 0 ? jobs : mockJobs;
+    let filtered = dataToFilter;
+
+    // Filter by type
+    if (type !== 'all') {
+      filtered = filtered.filter(job => job.type === type);
+    }
+
+    // Filter by search query
+    if (query.trim()) {
+      filtered = filtered.filter(job =>
+        job.title.toLowerCase().includes(query.toLowerCase()) ||
+        job.description?.toLowerCase().includes(query.toLowerCase()) ||
+        job.location?.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    setFilteredJobs(filtered);
+  };
+
+  // Update filtered jobs when jobs or filters change
+  React.useEffect(() => {
+    filterJobs(searchQuery, selectedType);
+  }, [jobs, searchQuery, selectedType]);
+
+  const TypeFilter = () => (
+    <View style={styles.typeFilter}>
+      {['all', 'CDI', 'CDD', 'Stage', 'Freelance'].map((type) => (
+        <TouchableOpacity
+          key={type}
+          style={[
+            styles.typeFilterButton,
+            {
+              backgroundColor: selectedType === type 
+                ? themeColors.primary 
+                : themeColors.card,
+              borderColor: selectedType === type 
+                ? themeColors.primary 
+                : themeColors.border,
+            },
+          ]}
+          onPress={() => setSelectedType(type)}
+        >
+          <Text
+            style={[
+              styles.typeFilterText,
+              {
+                color: selectedType === type 
+                  ? '#FFFFFF' 
+                  : themeColors.text,
+              },
+            ]}
+          >
+            {type === 'all' ? 'Tous' : type}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderJobItem = ({ item }: { item: any }) => (
     <Card style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <View style={styles.jobTitleContainer}>
@@ -123,7 +178,7 @@ export default function JobsScreen() {
         </View>
         
         <Text style={[styles.jobCompany, { color: themeColors.textSecondary }]}>
-          {item.company}
+          {item.entreprise?.name || item.company || 'Entreprise'}
         </Text>
       </View>
       
@@ -131,13 +186,13 @@ export default function JobsScreen() {
         <View style={styles.jobDetailRow}>
           <IconSymbol name="location-on" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
-            {item.location}
+            {item.location || 'Non spécifié'}
           </Text>
         </View>
         <View style={styles.jobDetailRow}>
           <IconSymbol name="attach-money" size={16} color={themeColors.textSecondary} />
           <Text style={[styles.jobDetailText, { color: themeColors.textSecondary }]}>
-            {item.salary}
+            {item.salary_range || item.salary || 'À négocier'}
           </Text>
         </View>
         <View style={styles.jobDetailRow}>
@@ -177,7 +232,10 @@ export default function JobsScreen() {
         />
         <Button
           title="Postuler"
-          onPress={() => console.log('Apply to job:', item.id)}
+          onPress={() => router.push({
+            pathname: '/apply-job',
+            params: { jobId: item.id, jobTitle: item.title }
+          })}
           size="small"
           style={styles.actionButton}
         />
@@ -204,6 +262,10 @@ export default function JobsScreen() {
         >
           <IconSymbol name="tune" size={20} color="#FFFFFF" />
         </TouchableOpacity>
+      </View>
+      
+      <View style={styles.filtersContainer}>
+        <TypeFilter />
       </View>
       
       <View style={styles.resultsHeader}>
@@ -329,5 +391,24 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  filtersContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  typeFilter: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  typeFilterButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  typeFilterText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

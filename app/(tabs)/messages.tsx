@@ -15,6 +15,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import Input from '../../components/Input';
 import Header from '../../components/Header';
 import { colors, spacing, typography, borderRadius } from '../../styles/commonStyles';
+import { useChats } from '../../hooks/useChats';
 
 interface Chat {
   id: string;
@@ -83,16 +84,18 @@ const mockChats: Chat[] = [
 
 export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredChats, setFilteredChats] = useState(mockChats);
+  const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
+  const { chats, loading } = useChats();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    const dataToFilter = chats.length > 0 ? chats : mockChats;
     if (query.trim() === '') {
-      setFilteredChats(mockChats);
+      setFilteredChats(dataToFilter);
     } else {
-      const filtered = mockChats.filter(
+      const filtered = dataToFilter.filter(
         chat =>
           chat.name.toLowerCase().includes(query.toLowerCase()) ||
           chat.lastMessage.toLowerCase().includes(query.toLowerCase())
@@ -101,15 +104,42 @@ export default function MessagesScreen() {
     }
   };
 
+  // Update filtered chats when chats change
+  React.useEffect(() => {
+    const dataToUse = chats.length > 0 ? chats : mockChats;
+    if (searchQuery.trim() === '') {
+      setFilteredChats(dataToUse);
+    } else {
+      const filtered = dataToUse.filter(
+        chat =>
+          chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredChats(filtered);
+    }
+  }, [chats, searchQuery]);
+
   const formatTime = (time: string) => {
-    // Simple time formatting - in real app, use proper date formatting
-    return time;
+    const date = new Date(time);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInHours < 24) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInHours < 48) {
+      return 'Hier';
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}j`;
+    }
   };
 
   const renderChatItem = ({ item }: { item: Chat }) => (
     <TouchableOpacity
       style={[styles.chatItem, { backgroundColor: themeColors.card }]}
-      onPress={() => router.push(`/(tabs)/messages/${item.id}`)}
+      onPress={() => router.push(`/(tabs)/messages/${item.otherUserId || item.id}`)}
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>

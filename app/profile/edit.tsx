@@ -38,11 +38,12 @@ const LOCATIONS = [
 
 export default function ProfileEditScreen() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     role: 'candidat' as 'candidat' | 'entreprise' | 'formateur',
     location: '',
     skills: '',
+    phone: '',
+    bio: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -53,11 +54,12 @@ export default function ProfileEditScreen() {
   useEffect(() => {
     if (profile) {
       setFormData({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
+        fullName: profile.full_name || '',
         role: profile.role || 'candidat',
         location: profile.location || '',
         skills: profile.skills?.join(', ') || '',
+        phone: profile.phone || '',
+        bio: profile.bio || '',
       });
     }
   }, [profile]);
@@ -72,12 +74,8 @@ export default function ProfileEditScreen() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Le prénom est requis';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Le nom est requis';
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Le nom complet est requis';
     }
 
     if (!formData.location.trim()) {
@@ -102,12 +100,12 @@ export default function ProfileEditScreen() {
       .filter(skill => skill.length > 0);
 
     const result = await updateProfile({
-      first_name: formData.firstName.trim(),
-      last_name: formData.lastName.trim(),
+      full_name: formData.fullName.trim(),
       role: formData.role,
       location: formData.location.trim(),
       skills: skillsArray,
-      is_profile_complete: true,
+      phone: formData.phone.trim(),
+      bio: formData.bio.trim(),
     });
 
     if (result?.error) {
@@ -182,23 +180,23 @@ export default function ProfileEditScreen() {
           </Text>
 
           <Input
-            label="Prénom"
-            value={formData.firstName}
-            onChangeText={(value) => updateFormData('firstName', value)}
-            placeholder="Votre prénom"
+            label="Nom complet"
+            value={formData.fullName}
+            onChangeText={(value) => updateFormData('fullName', value)}
+            placeholder="Votre nom complet"
             autoCapitalize="words"
             leftIcon="person"
-            error={errors.firstName}
+            error={errors.fullName}
           />
 
           <Input
-            label="Nom"
-            value={formData.lastName}
-            onChangeText={(value) => updateFormData('lastName', value)}
-            placeholder="Votre nom"
-            autoCapitalize="words"
-            leftIcon="person"
-            error={errors.lastName}
+            label="Téléphone"
+            value={formData.phone}
+            onChangeText={(value) => updateFormData('phone', value)}
+            placeholder="Votre numéro de téléphone"
+            keyboardType="phone-pad"
+            leftIcon="phone"
+            error={errors.phone}
           />
 
           <RoleSelector />
@@ -226,6 +224,17 @@ export default function ProfileEditScreen() {
           <Text style={[styles.hint, { color: themeColors.textSecondary }]}>
             Séparez vos compétences par des virgules
           </Text>
+
+          <Input
+            label="Bio"
+            value={formData.bio}
+            onChangeText={(value) => updateFormData('bio', value)}
+            placeholder="Parlez-nous de vous..."
+            multiline
+            numberOfLines={4}
+            leftIcon="info"
+            error={errors.bio}
+          />
 
           <Button
             title="Enregistrer le profil"

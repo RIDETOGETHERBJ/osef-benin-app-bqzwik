@@ -67,9 +67,9 @@ export const useAuthStore = create<AuthState>()(
             
             // Fetch user profile
             const { data: profileData, error: profileError } = await supabase
-              .from('user_profiles')
+              .from('userprofile')
               .select('*')
-              .eq('id', data.user.id)
+              .eq('user_id', data.user.id)
               .single();
 
             if (!profileError && profileData) {
@@ -94,6 +94,9 @@ export const useAuthStore = create<AuthState>()(
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+              emailRedirectTo: 'https://natively.dev/email-confirmed'
+            }
           });
 
           if (error) {
@@ -103,26 +106,38 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (data.user) {
+            // Create user in users table first
+            const { error: userError } = await supabase
+              .from('users')
+              .insert([{
+                id: data.user.id,
+                email: data.user.email!,
+              }]);
+
+            if (userError) {
+              console.log('User creation error:', userError.message);
+            }
+
             // Create user profile
             const profileData = {
-              id: data.user.id,
-              email: data.user.email!,
-              first_name: firstName,
-              last_name: lastName,
+              user_id: data.user.id,
+              full_name: `${firstName} ${lastName}`,
               role: 'candidat' as const,
               location: '',
               skills: [],
-              is_profile_complete: false,
+              verified: false,
             };
 
-            const { error: profileError } = await supabase
-              .from('user_profiles')
-              .insert([profileData]);
+            const { data: insertedProfile, error: profileError } = await supabase
+              .from('userprofile')
+              .insert([profileData])
+              .select()
+              .single();
 
             if (profileError) {
               console.log('Profile creation error:', profileError.message);
             } else {
-              set({ profile: profileData });
+              set({ profile: insertedProfile });
             }
 
             set({ user: data.user, isAuthenticated: true });
@@ -164,9 +179,9 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const { data, error } = await supabase
-            .from('user_profiles')
+            .from('userprofile')
             .update(updates)
-            .eq('id', user.id)
+            .eq('user_id', user.id)
             .select()
             .single();
 
@@ -201,9 +216,9 @@ export const useAuthStore = create<AuthState>()(
             
             // Fetch user profile
             const { data: profileData, error: profileError } = await supabase
-              .from('user_profiles')
+              .from('userprofile')
               .select('*')
-              .eq('id', session.user.id)
+              .eq('user_id', session.user.id)
               .single();
 
             if (!profileError && profileData) {
