@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, Notification } from '../config/supabase';
 import { useAuthStore } from '../store/userStore';
 
@@ -9,7 +9,7 @@ export const useNotifications = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuthStore();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -32,7 +32,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -102,7 +102,7 @@ export const useNotifications = () => {
         subscription.unsubscribe();
       };
     }
-  }, [user]);
+  }, [user, fetchNotifications]);
 
   return {
     notifications,

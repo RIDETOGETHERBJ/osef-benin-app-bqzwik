@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, Message } from '../config/supabase';
 import { useAuthStore } from '../store/userStore';
 
@@ -21,7 +21,7 @@ export const useChats = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -96,7 +96,7 @@ export const useChats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchChats();
@@ -124,7 +124,7 @@ export const useChats = () => {
         subscription.unsubscribe();
       };
     }
-  }, [user]);
+  }, [user, fetchChats]);
 
   return { chats, loading, error, refetch: fetchChats };
 };

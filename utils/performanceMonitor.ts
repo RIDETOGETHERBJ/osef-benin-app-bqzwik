@@ -172,6 +172,6 @@ export const withPerformanceMonitoring = <P extends object>(
   
   return React.memo((props: P) => {
     usePerformanceTimer(displayName);
-    return <WrappedComponent {...props} />;
+    return React.createElement(WrappedComponent, props);
   });
 };

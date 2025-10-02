@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, Candidature } from '../config/supabase';
 import { useAuthStore } from '../store/userStore';
 
@@ -9,7 +9,7 @@ export const useApplications = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -40,7 +40,7 @@ export const useApplications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const applyToJob = async (
     offreId: string,
@@ -112,7 +112,7 @@ export const useApplications = () => {
 
   useEffect(() => {
     fetchApplications();
-  }, [user]);
+  }, [fetchApplications]);
 
   return {
     applications,

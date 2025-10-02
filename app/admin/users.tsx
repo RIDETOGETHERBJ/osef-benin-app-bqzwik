@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -43,7 +43,7 @@ export default function AdminUsersScreen() {
     }
   }, [profile]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -75,17 +75,13 @@ export default function AdminUsersScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchUsers();
   }, []);
 
   useEffect(() => {
-    filterUsers();
-  }, [searchQuery, selectedRole, users]);
+    fetchUsers();
+  }, [fetchUsers]);
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
 
     // Filter by role
@@ -102,7 +98,11 @@ export default function AdminUsersScreen() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users, selectedRole, searchQuery]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     Alert.alert(

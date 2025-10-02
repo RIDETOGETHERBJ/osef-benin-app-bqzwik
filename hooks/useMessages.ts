@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, Message } from '../config/supabase';
 import { useAuthStore } from '../store/userStore';
 
@@ -9,7 +9,7 @@ export const useMessages = (otherUserId: string) => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!user || !otherUserId) return;
 
     try {
@@ -40,7 +40,7 @@ export const useMessages = (otherUserId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, otherUserId]);
 
   const sendMessage = async (content: string) => {
     if (!user || !otherUserId || !content.trim()) return;
@@ -99,7 +99,7 @@ export const useMessages = (otherUserId: string) => {
         subscription.unsubscribe();
       };
     }
-  }, [user, otherUserId]);
+  }, [user, otherUserId, fetchMessages]);
 
   return { messages, loading, error, sendMessage, refetch: fetchMessages };
 };

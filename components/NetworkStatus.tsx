@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,29 +17,30 @@ export default function NetworkStatus() {
   const colorScheme = useColorScheme();
   const themeColors = colors[colorScheme || 'light'];
 
-  useEffect(() => {
-    const removeListener = OfflineManager.addNetworkListener((online) => {
-      setIsOnline(online);
-      
-      if (!online) {
-        // Show offline banner
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-      } else {
-        // Hide offline banner
-        Animated.timing(slideAnim, {
-          toValue: -50,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-      }
-    });
+  const handleNetworkChange = useCallback((online: boolean) => {
+    setIsOnline(online);
+    
+    if (!online) {
+      // Show offline banner
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Hide offline banner
+      Animated.timing(slideAnim, {
+        toValue: -50,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [slideAnim]);
 
+  useEffect(() => {
+    const removeListener = OfflineManager.addNetworkListener(handleNetworkChange);
     return removeListener;
-  }, []);
+  }, [handleNetworkChange]);
 
   if (isOnline) return null;
 

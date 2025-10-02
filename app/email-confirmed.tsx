@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,14 @@ export default function EmailConfirmedScreen() {
   const themeColors = colors[colorScheme || 'light'];
   const { checkAuthState } = useAuthStore();
 
+  const checkAuthStateCallback = useCallback(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+
   useEffect(() => {
     // Check auth state when component mounts
-    checkAuthState();
-  }, []);
+    checkAuthStateCallback();
+  }, [checkAuthStateCallback]);
 
   const handleContinue = () => {
     router.replace('/(tabs)');

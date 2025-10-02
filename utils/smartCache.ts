@@ -1,5 +1,6 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
 import { PerformanceMonitor } from './performanceMonitor';
 
 const CACHE_PREFIX = 'smart_cache_';
@@ -268,7 +269,7 @@ export const useCachedData = <T>(
     } finally {
       setLoading(false);
     }
-  }, [key, ttl, ...dependencies]);
+  }, [key, fetcher, ttl, ...dependencies]);
 
   React.useEffect(() => {
     fetchData();

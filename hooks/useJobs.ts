@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, OffreEmploi } from '../config/supabase';
 import { PerformanceMonitor } from '../utils/performanceMonitor';
 import { SmartCache } from '../utils/smartCache';
@@ -9,7 +9,7 @@ export const useJobs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     await PerformanceMonitor.measureAsync('fetch_jobs', async () => {
       try {
         setLoading(true);
@@ -52,11 +52,11 @@ export const useJobs = () => {
         setLoading(false);
       }
     }, { jobCount: 10 });
-  };
+  }, []);
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   return { jobs, loading, error, refetch: fetchJobs };
 };
